@@ -1,5 +1,7 @@
 // Utility Functions
 // Copyright (c) 2014 - 2018 Sport Trades Ltd
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/util.q
 

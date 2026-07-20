@@ -1,5 +1,7 @@
 // Code Loading Library
 // Copyright (c) 2016 - 2017 Sport Trades Ltd, (c) 2020 - 2023 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/require.q
 
@@ -19,7 +21,7 @@
 / Complete list of discovered files from the root directory
 .require.location.discovered:enlist`;
 
-/ Required interface implementations for 'require' and related kdb-common libraries to function correctly
+/ Required interface implementations for 'require' and related qbase libraries to function correctly
 .require.interfaces:`lib`ifFunc xkey flip `lib`ifFunc`implFunc!"SS*"$\:();
 .require.interfaces[``]:(::);
 .require.interfaces[`log`.log.if.trace]:`.require.i.log;

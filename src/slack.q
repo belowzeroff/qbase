@@ -1,5 +1,7 @@
 // Slack Notification Integration via WebHook
 // Copyright (c) 2019 Sport Trades Ltd
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/slack.q
 

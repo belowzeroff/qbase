@@ -1,5 +1,7 @@
 // HTTP Query Library
 // Copyright (c) 2020 - 2021 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/http.q
 

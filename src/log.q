@@ -1,5 +1,7 @@
 // Logging Library
 // Copyright (c) 2015 - 2020 Sport Trades Ltd, 2020 - 2021 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/log.q
 
@@ -234,7 +236,7 @@
  };
 
 
-/ Sets the interface functions for other kdb-common component and libraries if the interface 'if' library is defined
+/ Sets the interface functions for other qbase component and libraries if the interface 'if' library is defined
 / in the current process
 /  @see .require.loadedLibs
 /  @see .if.setImplementationsFor

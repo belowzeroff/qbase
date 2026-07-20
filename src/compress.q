@@ -1,5 +1,7 @@
 // Disk Compression Functions
 // Copyright (c) 2021 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 .require.lib each `type`file`time`util;
 

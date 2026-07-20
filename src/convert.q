@@ -1,5 +1,7 @@
 // Type Conversion Functions
 // Copyright (c) 2015 - 2020 Sport Trades Ltd
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/convert.q
 

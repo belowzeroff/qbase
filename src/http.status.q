@@ -1,5 +1,7 @@
 // HTTP Query Library - Status Enumeration
 // Copyright (c) 2021 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Contains English descriptions of each HTTP status code as defined by https://httpstatuses.com/
 

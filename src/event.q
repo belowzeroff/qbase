@@ -1,5 +1,7 @@
 // Internal Event Management
 // Copyright (c) 2017 Sport Trades Ltd
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/event.q
 

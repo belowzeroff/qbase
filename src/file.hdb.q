@@ -1,5 +1,7 @@
 // File Manipulation for HDBs
 // Copyright (c) 2021 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 
 / Wrapper for '.Q.par' to deal with relative paths for a segmented DB configuration in the 'par.txt' file

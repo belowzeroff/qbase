@@ -1,5 +1,7 @@
 // Random Data Generation
 // Copyright (c) 2021 - 2022 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 
 / If true, a handle to /dev/random will be kept open after the first call to any '.rand.dr' functions. If false, a handle will be opened for every call

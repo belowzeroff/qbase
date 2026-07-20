@@ -1,7 +1,9 @@
-// Simple Process Initialisation - kdb-common
+// Simple Process Initialisation - qbase
 // Copyright (c) 2021 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
-// Provides a simple initialisation of kdb-common with require and core libraries
+// Provides a simple initialisation of qbase with require and core libraries
 
 
 / Environment variable to change the root that 'require' will initialise and search for libraries from. If this is not
@@ -9,7 +11,7 @@
 / available at *boot.q-dir*/src/require.q
 .boot.cfg.appRootEnvVar:`KDB_APPLICATION_ROOT;
 
-/ Modes to start a kdb-common based kdb process.
+/ Modes to start a qbase based kdb process.
 / Key is the expected command line argument, the value is the function to perform the initialisation
 / If there are no matches, the process starts with just the core libraries loaded
 /  - '--load-libs': Loads comma-separated libraries into the process
@@ -22,7 +24,7 @@
 .boot.cfg.coreLibs:`log`cargs`ns;
 
 
-/ The root path of the kdb-common libraries
+/ The root path of the qbase libraries
 .boot.root.kdbCommon:`:.
 
 / The root path of the application. This will only be different from '.boot.root.kdbCommon' if $KDB_APPLICATION_ROOT is set
@@ -53,7 +55,7 @@
         system "e 1";
     ];
 
-    -1 "Application root: ",(1_ string .boot.root.app)," | kdb-common root: ",1_ string .boot.root.kdbCommon;
+    -1 "Application root: ",(1_ string .boot.root.app)," | qbase root: ",1_ string .boot.root.kdbCommon;
 
     require:` sv .boot.root.kdbCommon,`src`require.q;
     system "l ",1_ string require;

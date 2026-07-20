@@ -1,5 +1,7 @@
 // CSV Parsing and Writing Functions
 // Copyright (c) 2016 - 2017 Sport Trades Ltd
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/csv.q
 

@@ -1,5 +1,7 @@
 // Manipulation for On-Disk Files
 // Copyright (c) 2021 - 2022 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 
 // All kdb+ files have a 'magic number' as the first 2 bytes of the file:

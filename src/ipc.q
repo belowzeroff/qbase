@@ -1,5 +1,7 @@
 // Inter Process Communication Functionality
 // Copyright (c) 2017 Sport Trades Ltd, (c) 2020 - 2023 Jaskirat Rajasansir
+// Copyright (c) 2026 Evgen Bielozorov
+// Licensed under the Apache License, Version 2.0
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/ipc.q
 
