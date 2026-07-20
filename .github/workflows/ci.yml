@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  lint:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No tabs or trailing whitespace in test sources
+        run: |
+          set -e
+          if grep -rnP '\t' tests/*.q; then echo "::error::hard tabs found in tests/"; exit 1; fi
+          if grep -rnP ' +$' tests/*.q; then echo "::error::trailing whitespace found in tests/"; exit 1; fi
+          echo "OK: test sources are clean"
+
+  test:
+    name: Test suite (kdb+)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check kdb+ secrets
+        id: secrets
+        env:
+          KDB_DOWNLOAD_URL: ${{ secrets.KDB_DOWNLOAD_URL }}
+          KDB_LICENSE_B64: ${{ secrets.KDB_LICENSE_B64 }}
+        run: |
+          if [ -z "${KDB_DOWNLOAD_URL:-}" ] || [ -z "${KDB_LICENSE_B64:-}" ]; then
+            echo "::warning::kdb+ secrets not set (KDB_DOWNLOAD_URL / KDB_LICENSE_B64) — skipping the kdb+ test suite."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install kdb+
+        if: steps.secrets.outputs.present == 'true'
+        env:
+          KDB_DOWNLOAD_URL: ${{ secrets.KDB_DOWNLOAD_URL }}
+          KDB_LICENSE_B64: ${{ secrets.KDB_LICENSE_B64 }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rlwrap unzip curl
+          curl -fsSL "$KDB_DOWNLOAD_URL" -o /tmp/q.zip
+          unzip -q /tmp/q.zip -d "$HOME"
+          echo "$KDB_LICENSE_B64" | base64 -d > "$HOME/q/kc.lic"
+          echo "QHOME=$HOME/q" >> "$GITHUB_ENV"
+          echo "QLIC=$HOME/q" >> "$GITHUB_ENV"
+          echo "$HOME/q/l64" >> "$GITHUB_PATH"
+
+      - name: Run test suite
+        if: steps.secrets.outputs.present == 'true'
+        run: bash tests/run.sh
+
+# NOTE: Code-coverage collection (ROADMAP 2.3) is a planned follow-up — there is no
+# mature line-coverage tool for q. A q-linter (qlint) step can be added to the
+# 'lint' job once a pinned qlint distribution is chosen.

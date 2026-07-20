@@ -1,0 +1,25 @@
+# Quick local test environment for qbase.
+#
+# kdb+ is proprietary. Provide it in one of two ways:
+#   1. Bake it into the image with the free Linux edition:
+#        KDB_DOWNLOAD_URL="<free kdb+ linux zip url>" docker compose build
+#   2. Mount a licensed *Linux* kdb+ install (uncomment the volumes block below).
+#
+# A license (kc.lic) must be available in QHOME (or QLIC).
+#
+# Run the suite:  docker compose run --rm tests
+
+services:
+  tests:
+    build:
+      context: .
+      args:
+        KDB_DOWNLOAD_URL: ${KDB_DOWNLOAD_URL:-}
+    environment:
+      QHOME: /opt/kdb
+      QLIC: /opt/kdb
+    # If kdb+ was not baked into the image, mount a licensed Linux install
+    # (a directory containing l64/q and kc.lic):
+    # volumes:
+    #   - /path/to/linux/qhome:/opt/kdb:ro
+    command: ["bash", "tests/run.sh"]
