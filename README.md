@@ -7,18 +7,27 @@ compression and more).
 
 > `qbase` is a rebranded, actively maintained fork of
 > [BuaBook/kdb-common](https://github.com/BuaBook/kdb-common) (Apache-2.0).
-> See [ROADMAP.md](ROADMAP.md) for the modernisation plan (v2.0 architecture).
 
 ## Requirements
 
 * kdb+ **>= 4.0** (verified on 4.1)
 
+## Install
+
+```bash
+curl -sSL https://raw.githubusercontent.com/belowzeroff/qbase/master/install.sh | bash
+```
+
+Installs to `~/.qbase` (override with `$QBASE_HOME`), or clone the repository and use it
+in place. See [`install.sh`](install.sh) for options (offline install via `QBASE_SRC`,
+`$QINIT` integration).
+
 ## Quick Start
 
-1. Clone the repository and `cd` into the root folder.
-2. Start kdb+ with `boot.q`:
-   * Linux / macOS: `q $(pwd)/boot.q`
-   * Windows: `q %CD%\boot.q`
+Start kdb+ with `boot.q`:
+
+* Linux / macOS: `q ~/.qbase/boot.q`  (or `q $(pwd)/boot.q` from a checkout)
+* Windows: `q %CD%\boot.q`
 
 This loads the `cargs`, `log` and `ns` core libraries automatically during boot.
 Additional libraries can be loaded via the `--load-libs` command-line argument, or at
@@ -89,8 +98,25 @@ q)
 | `py` | PyKX (Python) integration (optional) |
 
 Module APIs are documented inline with [qdoc](https://github.com/BuaBook/kdb-common/wiki)
-annotations; the upstream [wiki](https://github.com/BuaBook/kdb-common/wiki) still applies
-to the module APIs until the dedicated docs portal lands (ROADMAP Phase 4).
+annotations in each source file.
+
+## Documentation
+
+A documentation site is built with MkDocs (see [`docs/`](docs) and [`mkdocs.yml`](mkdocs.yml)):
+Getting Started, Core Concepts, Module Guides and API Reference. It is published to GitHub
+Pages on each release.
+
+## Examples
+
+Runnable examples live in [`examples/`](examples):
+
+* [`microservice/`](examples/microservice) — a REST service exposing JSON metrics
+* [`tickerplant-subscriber/`](examples/tickerplant-subscriber) — a market-data subscriber
+* [`pykx-pipeline/`](examples/pykx-pipeline) — a hybrid q + Python pipeline
+
+## Testing
+
+See [`tests/`](tests). Run the suite with `tests/run.sh` (48 tests, green on kdb+ 4.1).
 
 ## License
 
