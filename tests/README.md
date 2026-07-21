@@ -12,8 +12,13 @@ framework (`tests/test.q`) with no dependencies beyond base q.
 | `run.sh` | Convenience wrapper around `q boot.q < tests/run.q` |
 | `test_boot.q` | Boot / initialisation sequence |
 | `test_cargs.q` | Command-line argument parsing |
-| `test_log.q` | Logging levels |
-| `test_require.q` | Dependency loading, namespace isolation, cycle guard |
+| `test_log.q` | Logging levels, context and JSON output |
+| `test_require.q` | Dependency loading, namespace isolation, cycle guard, loaded accessors |
+| `test_env.q` | `.env` file loading |
+| `test_http.q` | HTTP auth header helpers |
+| `test_jschema.q` | JSON schema validation |
+| `test_py.q` | PyKX integration guard |
+| `test_parquet.q` | arrowkdb / Parquet guard |
 
 Test cases are niladic functions in the `.t` namespace (e.g. `.t.cargs_parsesSimpleFlag`);
 the runner discovers them automatically.

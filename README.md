@@ -45,7 +45,7 @@ q)
 | Module | Description |
 |--------|-------------|
 | `require` | Dependency-aware code loader |
-| `log` / `log.loggers` | Structured, level-based logging |
+| `log` / `log.loggers` | Structured, level-based logging (text + JSON, contextual fields) |
 | `cargs` | Command-line argument parsing |
 | `ns` | Namespace management helpers |
 | `if` | Interface / implementation binding |
@@ -71,19 +71,22 @@ q)
 | `os` | OS-specific functionality |
 | `so` | Shared-object function manager |
 | `terminal` | Console management |
-| `env` | Environment variable manager |
+| `env` | Environment variables and `.env` file loading |
+| `parquet` | Apache Parquet read/write via `arrowkdb` (optional) |
 
 **Networking & Integrations**
 
 | Module | Description |
 |--------|-------------|
 | `ipc` | Inter-process communication |
-| `http` / `http.status` | HTTP client |
+| `http` / `http.status` | HTTP client (TLS, proxy, Basic/Bearer auth) |
+| `jschema` | JSON schema validation for `.j.k`-parsed data |
 | `wsc` | WebSocket client |
 | `cron` | Job scheduler |
 | `event` | Internal event management |
 | `mail` | E-mail sending via `mailx` |
 | `slack` | Slack notifications via webhook |
+| `py` | PyKX (Python) integration (optional) |
 
 Module APIs are documented inline with [qdoc](https://github.com/BuaBook/kdb-common/wiki)
 annotations; the upstream [wiki](https://github.com/BuaBook/kdb-common/wiki) still applies
