@@ -91,6 +91,22 @@
  };
 
 
+/ Builds an 'Authorization: Bearer <token>' header value
+/  @param token (String|Symbol) The bearer token
+/  @returns (String) The value for the 'Authorization' header
+.http.auth.bearer:{[token]
+    :"Bearer ",.type.ensureString token;
+ };
+
+/ Builds an 'Authorization: Basic <base64>' header value from a user and password
+/  @param user (String|Symbol) The username
+/  @param pass (String|Symbol) The password
+/  @returns (String) The value for the 'Authorization' header
+.http.auth.basic:{[user; pass]
+    :"Basic ",.Q.btoa .type.ensureString[user],":",.type.ensureString pass;
+ };
+
+
 / Peforms a HTTP GET to the target URL and parses the response
 / NOTE: The header "Connection: close" is sent with this request
 /  @see .http.send
