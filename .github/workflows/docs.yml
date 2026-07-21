@@ -1,12 +1,12 @@
 name: Docs
 
+# Manual-only for now — run it from the Actions tab when you are ready to publish.
+# Add a `release`/`push` trigger here to publish docs automatically.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
-# Deploy the MkDocs site to GitHub Pages.
-# Enable Pages for the repository (Settings -> Pages -> Source: GitHub Actions) first.
+# Build the MkDocs site and deploy it to GitHub Pages.
+# 'enablement: true' turns Pages on for the repository on the first run.
 permissions:
   contents: read
   pages: write
@@ -30,6 +30,8 @@ jobs:
       - run: pip install mkdocs-material
       - run: mkdocs build
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
