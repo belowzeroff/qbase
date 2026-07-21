@@ -5,9 +5,6 @@ sequence, a dependency loader (`require`), structured logging, command-line argu
 parsing, and a broad set of utility libraries (HTTP, IPC, CSV, cron, timezones,
 compression and more).
 
-> `qbase` is a rebranded, actively maintained fork of
-> [BuaBook/kdb-common](https://github.com/BuaBook/kdb-common) (Apache-2.0).
-
 ## Requirements
 
 * kdb+ **>= 4.0** (verified on 4.1)
@@ -124,3 +121,7 @@ Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for attri
 
 Original work © Sport Trades Ltd and Jaskirat Rajasansir; `qbase` modifications
 © 2026 Evgen Bielozorov.
+
+---
+
+<sub>Based on [BuaBook/kdb-common](https://github.com/BuaBook/kdb-common), Apache-2.0.</sub>
