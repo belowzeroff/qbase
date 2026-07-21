@@ -40,3 +40,50 @@
 .t.log_isLoggingAtRaisesOnBadLevel:{[]
     .test.assert.raisesLike[.log.isLoggingAt; enlist `NOPE; "*IllegalArgument*"];
  };
+
+.t.log_contextStringFormatsPairs:{[]
+    orig:.log.context;
+    .log.setContext `trace_id`user!("abc123"; `alice);
+    s:.log.i.contextString[];
+    .log.context:orig;
+    .test.assert.true[s like "*trace_id=abc123*"];
+    .test.assert.true[s like "*user=alice*"];
+ };
+
+.t.log_addContextAndClear:{[]
+    orig:.log.context;
+    .log.clearContext[];
+    .log.addContext[`span_id; "s1"];
+    added:.log.context`span_id;
+    .log.clearContext[];
+    cleared:count .log.context;
+    .log.context:orig;
+    .test.assert.equals["s1"; added];
+    .test.assert.equals[0; cleared];
+ };
+
+.t.log_contextEmptyStringWhenNoContext:{[]
+    orig:.log.context;
+    .log.clearContext[];
+    s:.log.i.contextString[];
+    .log.context:orig;
+    .test.assert.equals[""; s];
+ };
+
+.t.log_setContextRaisesOnNonDict:{[]
+    .test.assert.raisesLike[.log.setContext; enlist `notADict; "*IllegalArgument*"];
+ };
+
+.t.log_jsonLoggerEmitsValidJson:{[]
+    orig:.log.context;
+    .log.clearContext[];
+    .log.addContext[`trace_id; "t-1"];
+    / fd writes the emitted line into a capture global instead of stdout
+    .log.loggers.json[(::); {`.t.i.captured set x}; `INFO; ("user {} logged in"; `alice)];
+    .log.context:orig;
+
+    parsed:.j.k .t.i.captured;
+    .test.assert.equals["INFO"; parsed`level];
+    .test.assert.equals["user alice logged in"; parsed`message];
+    .test.assert.equals["t-1"; parsed`trace_id];
+ };

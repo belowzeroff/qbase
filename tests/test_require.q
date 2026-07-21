@@ -42,3 +42,17 @@
     .require.lib`rand;
     .test.assert.true[0 < count key `.rand];
  };
+
+.t.require_loadedListsLoadedLibs:{[]
+    loaded:.require.loaded[];
+    .test.assert.true[all `require`log`cargs in loaded];
+ };
+
+.t.require_isLoadedTrueForLoaded:{[]
+    .test.assert.true[.require.isLoaded `require];
+ };
+
+.t.require_isLoadedFalseForUnknown:{[]
+    .test.assert.false[.require.isLoaded `no_such_lib_abc];
+ };
+

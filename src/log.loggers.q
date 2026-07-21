@@ -24,6 +24,7 @@
 / JSON logger
 / NOTE: This logger does not do the slf4j-style parameterised replacement of the message but prints as the supplied list
 .log.loggers.json:{[formatter; fd; lvl; message]
-    logElems:`date`time`level`processId`user`handle`message!(.time.today[]; .time.nowAsTime[]; lvl; .log.process; `system^.z.u; .z.w; message);
+    logElems:`date`time`level`processId`user`handle`message!(.time.today[]; .time.nowAsTime[]; lvl; .log.process; `system^.z.u; .z.w; .log.i.formatMessage message);
+    logElems,:.log.context;
     fd .j.j logElems;
  };

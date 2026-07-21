@@ -111,6 +111,20 @@
     .log.if.info "Library root location refreshed [ File Count: ",string[count .require.location.discovered]," ]";
  };
 
+/ Convenience accessor over the '.require.loadedLibs' module tracking table
+/  @returns (SymbolList) The libraries currently loaded via require
+/  @see .require.loadedLibs
+.require.loaded:{
+    :exec lib from .require.loadedLibs where loaded;
+ };
+
+/  @param lib (Symbol) The library to check
+/  @returns (Boolean) True if the specified library is currently loaded
+/  @see .require.loaded
+.require.isLoaded:{[lib]
+    :lib in .require.loaded[];
+ };
+
 / Marks the specified library as loaded in the loaded libraries table. NOTE: This
 / function does not actually do the load
 /  @see .require.loadedLibs

@@ -77,6 +77,10 @@
 / NOTE: If this is set prior to the library being initialised, it will not be overwritten during '.log.init'
 .log.process:"";
 
+/ Contextual fields automatically appended to every log line and included in JSON logs (e.g. trace_id, span_id, user).
+/ Empty by default. Manage with '.log.setContext' / '.log.addContext' / '.log.clearContext'.
+.log.context:(`symbol$())!();
+
 / The parsed custom logging format (from '.log.cfg.format'). This is only populated if '.log.cfg.format' is non-empty
 /  @see .log.i.parsePattern
 .log.pattern:()!();
@@ -172,12 +176,14 @@
 /  @returns (StringList) List of log elements in string format
 /  @see http://www.slf4j.org/faq.html#logging_performance
 .log.formatter.default:{[lvl; message]
-    if[0h = type message;
-        message:"" sv ("{}" vs first message),'(.type.ensureString each 1_ message),enlist "";
-    ];
+    message:.log.i.formatMessage message;
 
     elems:(.time.today[]; .time.nowAsTime[]; lvl; .log.process; `system^.z.u; .z.w; message);
     elems:@[elems; where not .type.isString each elems; string];
+
+    if[0 < count .log.context;
+        elems,:enlist .log.i.contextString[];
+    ];
 
     :elems;
  };
@@ -198,6 +204,49 @@
     patStrs@:where not ""~/:patStrs;
 
     :patStrs;
+ };
+
+
+/ Formats a raw log message: if it is a parameterised (slf4j-style) list, substitute "{}" with the supplied arguments
+/  @param message (String|List) The raw message
+/  @returns (String) The formatted message string
+.log.i.formatMessage:{[message]
+    if[0h = type message;
+        message:"" sv ("{}" vs first message),'(.type.ensureString each 1_ message),enlist "";
+    ];
+    :message;
+ };
+
+/  @returns (String) The current '.log.context' rendered as "[ k=v k2=v2 ]", or empty string if no context is set
+.log.i.contextString:{
+    if[0 = count .log.context;
+        :"";
+    ];
+    pairs:{ string[x],"=",.type.ensureString y }'[key .log.context; value .log.context];
+    :"[ ",(" " sv pairs)," ]";
+ };
+
+
+/ Replaces the entire logging context
+/  @param ctx (Dict) Symbol-keyed dictionary of contextual fields (e.g. `trace_id`span_id`user!...)
+/  @throws IllegalArgumentException If 'ctx' is not a dictionary
+.log.setContext:{[ctx]
+    if[not .type.isDict ctx;
+        '"IllegalArgumentException";
+    ];
+    .log.context:ctx;
+ };
+
+/ Adds or updates a single contextual field
+/  @param field (Symbol) The context field name
+/  @param val () The context field value
+.log.addContext:{[field; val]
+    .log.context[field]:val;
+ };
+
+/ Clears all logging context
+.log.clearContext:{
+    .log.context:(`symbol$())!();
  };
 
 

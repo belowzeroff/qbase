@@ -123,3 +123,70 @@
 
     :` sv first[toFind],file;
  };
+
+
+/ Loads KEY=VALUE pairs from a '.env'-style file into the environment cache. Blank lines and lines
+/ beginning with '#' are ignored; a leading 'export ' is stripped and a single pair of surrounding
+/ single/double quotes around values is removed. Loaded values are then available via '.env.get'.
+/  @param path (String|FilePath) The '.env' file to load
+/  @returns (Dict) The parsed key/value pairs (Symbol -> String)
+/  @throws DotEnvFileNotFoundException If the file does not exist
+/  @see .env.get
+.env.load:{[path]
+    path:$[.type.isString path; .convert.stringToHsym path; path];
+
+    if[not .type.isFile path;
+        '"DotEnvFileNotFoundException";
+    ];
+
+    parsed:.env.i.parseDotEnv read0 path;
+
+    .log.if.info "Loaded environment variables from file [ File: ",string[path]," ] [ Count: ",string[count parsed]," ]";
+
+    .env.cache,:parsed;
+    :parsed;
+ };
+
+/ Parses '.env'-style lines into a dictionary
+/  @param lines (StringList) The raw file lines
+/  @returns (Dict) Symbol -> String
+.env.i.parseDotEnv:{[lines]
+    lines:trim each lines;
+    lines@:where 0 < count each lines;
+    lines@:where not "#" = first each lines;
+    lines@:where "=" in/: lines;
+
+    if[0 = count lines;
+        :(`symbol$())!();
+    ];
+
+    :(!). flip .env.i.parseLine each lines;
+ };
+
+/ Parses a single 'KEY=VALUE' line, stripping an optional 'export ' prefix and surrounding quotes
+/  @param line (String) The line to parse
+/  @returns (List) A (Symbol; String) pair of the key and value
+.env.i.parseLine:{[line]
+    if["export " ~ 7 # line;
+        line:7 _ line;
+    ];
+
+    eq:first where "=" = line;
+
+    k:`$trim eq # line;
+    v:.env.i.unquote trim (eq + 1) _ line;
+
+    :(k; v);
+ };
+
+/ Removes a single pair of matching surrounding single or double quotes from a value
+/  @param v (String) The raw value
+/  @returns (String) The value with surrounding quotes removed (if present)
+.env.i.unquote:{[v]
+    if[1 < count v;
+        if[(first[v] = last v) & first[v] in "\"'";
+            :1 _ -1 _ v;
+        ];
+    ];
+    :v;
+ };
