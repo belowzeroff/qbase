@@ -53,6 +53,10 @@
 /  @param str (String) The string to trim
 /  @returns (String) The string with characters trimmed
 .util.trim:{[str]
+    if[(0 = count str) | not any not str in " \n\t\r";
+        :"";
+    ];
+
     :{y _ x}/[str;(first;{ -1*-1+y-last x }[;count str])@\:where not any str =/:(" ";"\n";"\t";"\r")];
  };
 
