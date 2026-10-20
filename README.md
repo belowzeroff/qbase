@@ -115,6 +115,25 @@ Runnable examples live in [`examples/`](examples):
 
 See [`tests/`](tests). Run the suite with `tests/run.sh` (48 tests, green on kdb+ 4.1).
 
+## Security
+
+* The `.os.run` / `.util.system` / `.mail.send` family single-quote-escapes path and text
+  arguments before shelling out, but the resulting string is still executed by a real shell.
+  Treat the `cmd` symbol argument as the only trusted part of the call - it is drawn from a
+  fixed whitelist, `.os.availableCommands` - and don't feed these functions OS command *names*
+  from untrusted input.
+* Windows (`.os.w.*`) quoting is best-effort and unverified. If you expose any of these
+  functions to untrusted input on Windows, validate/sanitise the input yourself first.
+* `boot.q` ships no IPC authentication (`.z.pw`/`.z.pg`/`.z.ps`). Any process started with
+  kdb+'s `-p` flag accepts and evaluates inbound messages from any peer, by kdb+'s own default
+  behaviour. Secure it with kdb+'s `-u`/`-U` flags, your own `.z.pw`, or a firewall before
+  exposing a port.
+* `.ipc.cfg.logPasswordsDuringConnect` and `.slack.cfg.logWebhookUrl` both default to `0b`
+  (secrets masked in logs). Leave them off in production.
+* The `curl -sSL ... | bash` install one-liner trusts GitHub's raw content delivery and your
+  network path. Inspect [`install.sh`](install.sh) yourself, or self-host it, if that's a
+  concern for your environment.
+
 ## License
 
 Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for attribution.
