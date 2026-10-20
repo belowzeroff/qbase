@@ -78,7 +78,7 @@
 / available on Ubuntu. On other distributions, you may find that you cannot send HTML e-mail or attach files.
 /  @throws InvalidEmailAttachmentPathException If any of the attachments have a space in the path (not supported)
 .mail.i.send.mailx:{[dict]
-    mailStr:"mailx -s \"",dict[`subject],"\"";
+    mailStr:"mailx -s ",.os.i.escapeSQ dict[`subject];
     bodyStr:"";
 
     if[not .util.isEmpty dict`body;
@@ -88,13 +88,13 @@
             mailStr,:" -a 'Content-Type: text/html' ";
         ];
     ];
-    
+
     if[not .util.isEmpty dict`from;
-        mailStr,:" -a 'From: ",string[dict`from],"'";
+        mailStr,:" -a ",.os.i.escapeSQ["From: ",string[dict`from]];
     ];
 
     mailStr:"echo '",bodyStr,"' | ",mailStr;
-    
+
     if[not .util.isEmpty dict`cc;
         mailStr,:" -c ",.mail.i.getEmailAddresses dict`cc;
     ];
@@ -111,7 +111,7 @@
             '"InvalidEmailAttachmentPathException";
         ];
 
-        mailStr,:" -A "," -A " sv 1_/: string attach;
+        mailStr,:" -A "," -A " sv .os.i.escapeSQ each 1_/: string attach;
     ];
 
     mailStr,:" ",.mail.i.getEmailAddresses dict`to;
@@ -121,7 +121,7 @@
 / Sending mail with 'mutt'. This command seems to work best on CentOS where mailx availability differs.
 /  @throws InvalidEmailAttachmentPathException If any of the attachments have a space in the path (not supported)
 .mail.i.send.mutt:{[dict]
-    mailStr:"mutt -s \"",dict[`subject],"\"";
+    mailStr:"mutt -s ",.os.i.escapeSQ dict[`subject];
     bodyStr:"";
 
     if[not .util.isEmpty dict`body;
@@ -133,7 +133,7 @@
     ];
 
     if[not .util.isEmpty dict`from;
-        mailStr,:" -e 'my_hdr From: ",string[dict`from],"'";
+        mailStr,:" -e ",.os.i.escapeSQ["my_hdr From: ",string[dict`from]];
     ];
 
     mailStr:"echo '",bodyStr,"' | ",mailStr;
@@ -156,12 +156,12 @@
             '"InvalidEmailAttachmentPathException";
         ];
 
-        mailStr,:" -a "," -a " sv 1_/: string attach;
+        mailStr,:" -a "," -a " sv .os.i.escapeSQ each 1_/: string attach;
     ];
 
     :mailStr;
  };
 
 .mail.i.getEmailAddresses:{
-    :"\"",("," sv string distinct (),x),"\" ";
+    :.os.i.escapeSQ["," sv string distinct (),x]," ";
  };
