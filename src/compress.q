@@ -21,7 +21,11 @@
 /  - parallel (1b): Parallelise compression of columns within a splay if possible
 /  - dryrun (0b): Return table of what *would* be done based on the supplied parameters
 /  - gc (0b): Perform a garbage collection (via '.util.gc') after a splay compression
-.compress.cfg.compressDefaults:`recompress`inplace`srcParTxt`tgtParTxt`parallel`dryrun`gc!0011100b;
+/  - ignoreTables (`symbol$()): Tables to exclude from a HDB partition compression (only with .compress.partition)
+/  - compressColumns (`symbol$()): If non-empty, only these columns will be compressed, all others copied (only with .compress.splay)
+/  - ignoreColumns (`symbol$()): If non-empty, these columns will be copied rather than compressed (only with .compress.splay)
+.compress.cfg.compressDefaults:(`recompress`inplace`srcParTxt`tgtParTxt`parallel`dryrun`gc`ignoreTables`compressColumns`ignoreColumns)!
+    (0b;0b;1b;1b;1b;0b;0b;`symbol$();`symbol$();`symbol$());
 
 / The file suffixes of the additional files stored by kdb+ for nested lists
 .compress.cfg.nestedListSuffixes:("#"; "##");
@@ -100,17 +104,20 @@
 /  @param sourceSplayPath (FolderPath) The source splay
 /  @param targetSplayPath (FolderPath) The target splay. This can be the same as 'sourceSplayPath' ONLY if the 'inplace' option is set to true
 /  @param compressType (Symbol|IntegerList) The compression type. If a symbol, the compression settings will be taken from '.compress.defaults'
-/  @param options (Dict) 'inplace' - must be true if the target is the same as the source
+/  @param options (Dict) 'inplace' - must be true if the target is the same as the source. 'compressColumns' - if non-empty, only
+/   these columns will be compressed and every other column copied. 'ignoreColumns' - if non-empty, these columns will be copied
+/   rather than compressed. 'compressColumns' and 'ignoreColumns' are mutually exclusive
 /  @returns (Table) Details of the columns and how they were compressed to the target
 /  @throws InvalidSourceSplayPathException If the source path specified is not a splay table folder
 /  @throws TargetAlreadyExistsException If the specified target is already a folder
 /  @throws InplaceCompressionForbiddenException If the specified target is the same as the source but the 'inplace' option is not set to true
 /  @throws InvalidCompressTypeException If the symbol reference is not in '.compress.defaults' or not a 3-element integer list
+/  @throws IllegalArgumentException If both 'compressColumns' and 'ignoreColumns' are set
 /  @see .compress.cfg.compressDefaults
 /  @see .compress.cfg.schemas
 /  @see .compress.defaults
 .compress.splay:{[sourceSplayPath; targetSplayPath; compressType; options]
-    options:.compress.cfg.compressDefaults ^ options;
+    options:.compress.cfg.compressDefaults,options;
 
     if[not .type.isSplayedTable sourceSplayPath;
         '"InvalidSourceSplayPathException";
@@ -157,6 +164,18 @@
     ];
 
     compressCfg:update writeMode:`ignore from compressCfg where inplace, writeMode = `copy;
+
+    if[0 < (count options`compressColumns) & 0 < count options`ignoreColumns;
+        '"IllegalArgumentException";
+    ];
+
+    if[0 < count options`compressColumns;
+        compressCfg:update writeMode:?[column in options`compressColumns; `compress; `copy] from compressCfg;
+    ];
+
+    if[0 < count options`ignoreColumns;
+        compressCfg:update writeMode:`copy from compressCfg where column in options`ignoreColumns;
+    ];
 
     compressCols:exec column from compressCfg where writeMode = `compress;
 
@@ -218,13 +237,14 @@
 /  @param partVal (Date|Month|Year|Long) The specific partition within the HDB to compress
 /  @param tbls (Symbol|SymbolList) The list of tables in the partition to compress. If `COMP_ALL` is specified, all tables in the partition will be compressed
 /  @param compressType (Symbol|IntegerList) See '.compress.splay'
-/  @param options (Dict) See '.compress.splay', 'srcParTxt' / 'tgtParTxt' - set to false to ignore 'par.txt' in source or target HDBs respectively
+/  @param options (Dict) See '.compress.splay', 'srcParTxt' / 'tgtParTxt' - set to false to ignore 'par.txt' in source or target HDBs respectively.
+/   'ignoreTables' - tables to exclude from compression, applied after 'tbls' / `COMP_ALL` is resolved
 /  @throws SourceHdbPartitionDoesNotExistException If the specified source HDB does not exist
 /  @see .compress.cfg.compressDefaults
 /  @see .compress.splay
 .compress.partition:{[sourceRoot; targetRoot; partVal; tbls; compressType; options]
     tbls:(),tbls;
-    options:.compress.cfg.compressDefaults ^ options;
+    options:.compress.cfg.compressDefaults,options;
 
     if[not .type.isSymbolList tbls;
         '"IllegalArgumentException";
@@ -250,6 +270,10 @@
 
     if[not `COMP_ALL in tbls;
         srcTables:tbls inter srcTables;
+    ];
+
+    if[0 < count options`ignoreTables;
+        srcTables:srcTables except options`ignoreTables;
     ];
 
     srcTblPaths:` sv/: srcPartPath,/:srcTables;
