@@ -5,6 +5,42 @@ All notable changes to qbase are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-10-20
+
+A patch release: two inherited-from-upstream bug fixes, and a security hardening pass over
+the library's shell-facing code. No breaking changes; no new public API surface.
+
+### Fixed
+
+- **`.ns.protectedExecute`** now returns the standard `` `isError`errorMsg`` error dictionary
+  instead of raising an unhandled exception when the target function reference does not exist,
+  matching the fix proposed upstream for
+  [BuaBook/kdb-common#115](https://github.com/BuaBook/kdb-common/issues/115).
+- **`.util.trim`** no longer raises a `type` error on an empty or all-whitespace string; it now
+  returns `""` for both.
+
+### Security
+
+- **`.os.run`** and its per-OS command templates (`mkdir`, `rm`, `rmF`, `mv`, `cp`, `ln`,
+  `rmFolder`, `cpFolder`, `pidCheck`, `tail`, `cpuAssign`, `readlink`, ...) previously spliced
+  their path/text argument directly into a shell command string with no escaping — any
+  argument containing shell metacharacters (`` ` ``, `;`, `$()`, `|`, ...) could break out and
+  run arbitrary commands wherever that argument came from untrusted input. They now pass every
+  argument through a new `.os.i.escapeSQ` single-quote-escaping helper before it reaches the
+  shell. The Windows (`.os.w.*`) templates get an analogous best-effort, **unverified** fix (see
+  the new README Security section). Also removed a duplicate `.os.w.rmFolder` definition.
+- **`.mail.send`** (`mailx`/`mutt` backends) had the same class of injection via the `subject`,
+  `from`, `cc`/`bcc`/`to` addresses and attachment paths — in particular, a `subject` containing
+  a double quote could break out of its `-s "..."` fragment entirely. All of these are now
+  escaped with `.os.i.escapeSQ` before the command is built. The existing
+  "attachment path contains a space" validation is kept as defense-in-depth.
+- **`.slack.notify`** logged the full Slack webhook URL — a secret — at both debug and warn
+  level. It now masks everything after the host by default (`.slack.i.maskUrl`); set the new
+  `.slack.cfg.logWebhookUrl:1b` to opt back into unmasked logging.
+- Added a **Security** section to the README covering these changes and the library's
+  remaining security-relevant defaults (no built-in IPC authentication in `boot.q`, the
+  Windows-escaping caveat, and the `install.sh` `curl | bash` trust assumption).
+
 ## [2.0.0] - 2026-07-21
 
 First release under the **qbase** name — a rebranded, modernised continuation of
@@ -48,4 +84,5 @@ code keeps working; this release adds tooling, tests, observability and document
 - Optional integrations (PyKX, arrowkdb, S3, AWS SigV4, async logging) are scaffolded
   or deferred — see the module documentation.
 
+[2.0.1]: https://github.com/belowzeroff/qbase/compare/v2.0.0...master
 [2.0.0]: https://github.com/belowzeroff/qbase/releases/tag/v2.0.0
