@@ -19,6 +19,14 @@
 .os.cfg.sharedObjectEnvVar[`m]:`DYLD_LIBRARY_PATH;
 .os.cfg.sharedObjectEnvVar[`w]:`PATH;
 
+/ Default OS-standard shared library search locations, used as a fallback when the configured
+/ env var (.os.sharedObjectEnvVar) does not resolve a match for a requested shared object
+/  @see .os.cfg.sharedObjectEnvVar
+.os.cfg.defaultSharedObjectPaths:(`symbol$())!();
+.os.cfg.defaultSharedObjectPaths[`l`v]:2#enlist `:/usr/lib`:/usr/local/lib`:/lib;
+.os.cfg.defaultSharedObjectPaths[`m]:`:/usr/lib`:/usr/local/lib`:/opt/homebrew/lib;
+.os.cfg.defaultSharedObjectPaths[`w]:enlist `:C:/Windows/System32;
+
 
 / The current operating system, independent of architecture
 /  @see .os.i.getOsType
@@ -30,12 +38,17 @@
 / The environment variable containing the PATH-type environment variable for shared object / DLL loading
 .os.sharedObjectEnvVar:`;
 
+/ The OS-standard shared library search locations for the current OS (populated by .os.init)
+/  @see .os.cfg.defaultSharedObjectPaths
+.os.defaultSharedObjectPaths:`:;
+
 
 .os.init:{
     .os.type:.os.i.getOsType[];
 
     .os.envPathSeparator:.os.cfg.envPathSeparator .os.type;
     .os.sharedObjectEnvVar:.os.cfg.sharedObjectEnvVar .os.type;
+    .os.defaultSharedObjectPaths:.os.cfg.defaultSharedObjectPaths .os.type;
  };
 
 / Runs the specified command with the specified parameters. NOTE: That not

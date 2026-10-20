@@ -5,7 +5,7 @@
 
 // Documentation: https://github.com/BuaBook/kdb-common/wiki/so.q
 
-.require.lib each `type`file`time`ns`os`env;
+.require.lib each `type`file`time`ns`os`env`convert;
 
 
 / The target namespace that all shared library functions will be loaded into
@@ -22,17 +22,26 @@
  };
 
 
-/ Attempts to find a shared object with the specified name within the paths specified by the source environment variable
+/ Attempts to find a shared object with the specified name within the paths specified by the source environment variable.
+/ If no match is found there, falls back to searching the OS-standard shared library locations (.os.defaultSharedObjectPaths)
 / NOTE: If multiple files match the specified name, only the first will be returned
 /  @param soName (String|Symbol) The shared object name to search for, including suffix
 /  @returns (FilePath) Path to the matching shared object file, or empty symbol if no matching file found
 /  @see .os.sharedObjectEnvVar
+/  @see .os.defaultSharedObjectPaths
 /  @see .env.get
 .so.findSharedObject:{[soName]
     soPaths:raze .file.findFilePaths["*",.type.ensureString soName;] each .env.get .os.sharedObjectEnvVar;
 
     if[0 = count soPaths;
-        .log.if.warn "No matching paths found for shared object [ Shared Object: ",.type.ensureString[soName]," ] [ Source Env Var: ",string[.os.sharedObjectEnvVar]," ]";
+        / .file.find / .file.listFolder raise on a non-existent folder, so only search the
+        / default paths that actually exist on this machine
+        existingDefaultPaths:.os.defaultSharedObjectPaths where .type.isFolder each .os.defaultSharedObjectPaths;
+        soPaths:raze .file.findFilePaths["*",.type.ensureString soName;] each existingDefaultPaths;
+    ];
+
+    if[0 = count soPaths;
+        .log.if.warn "No matching paths found for shared object [ Shared Object: ",.type.ensureString[soName]," ] [ Source Env Var: ",string[.os.sharedObjectEnvVar]," ] [ Default Paths: ",.convert.listToString[.os.defaultSharedObjectPaths]," ]";
         :`;
     ];
 

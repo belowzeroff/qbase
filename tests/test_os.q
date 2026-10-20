@@ -34,6 +34,26 @@
  };
 
 
+// -- .os.cfg.defaultSharedObjectPaths / .os.defaultSharedObjectPaths ---------
+
+/ BuaBook/kdb-common#48: OS-standard shared library locations, used as a fallback by
+/ '.so.findSharedObject' when the configured env var has no match. Shape: a dict of OS type
+/ (`l`v`m`w) to a FilePathList of default search locations for that OS
+.t.os_cfg_defaultSharedObjectPaths_populatedPerOsType:{[]
+    paths:.os.cfg.defaultSharedObjectPaths;
+
+    .test.assert.true[.type.isDict paths];
+    .test.assert.true[all `l`v`m`w in key paths];
+    .test.assert.true[all .type.isSymbolList each value paths];
+    .test.assert.true[all .type.isFilePath each raze value paths];
+ };
+
+.t.os_defaultSharedObjectPaths_setForCurrentOsOnInit:{[]
+    .test.assert.equals[.os.cfg.defaultSharedObjectPaths .os.type; .os.defaultSharedObjectPaths];
+    .test.assert.true[.type.isSymbolList .os.defaultSharedObjectPaths];
+ };
+
+
 // -- Regression: shell injection via .os.l.mkdir / .os.m.mkdir is closed -----
 
 / Builds a directory name which, if spliced unescaped into "mkdir -p <name>" (the old,
