@@ -113,7 +113,7 @@ Runnable examples live in [`examples/`](examples):
 
 ## Testing
 
-See [`tests/`](tests). Run the suite with `tests/run.sh` (48 tests, green on kdb+ 4.1).
+See [`tests/`](tests). Run the suite with `tests/run.sh` (127 tests, green on kdb+ 4.1).
 
 ## Security
 

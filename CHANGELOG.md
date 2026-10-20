@@ -7,8 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.1] - 2026-10-20
 
-A patch release: two inherited-from-upstream bug fixes, and a security hardening pass over
-the library's shell-facing code. No breaking changes; no new public API surface.
+A patch release: two inherited-from-upstream bug fixes, a security hardening pass over
+the library's shell-facing code, and two inherited-from-upstream feature extensions. No
+breaking changes; all new options default to the existing behaviour.
+
+### Added
+
+- **`.so.findSharedObject`** now falls back to OS-standard shared library locations
+  (`.os.defaultSharedObjectPaths`, e.g. `/usr/lib`, `/usr/local/lib`, `/opt/homebrew/lib` on
+  macOS) when the configured env var (`.os.sharedObjectEnvVar`) does not resolve a match,
+  matching the fix proposed upstream for
+  [BuaBook/kdb-common#48](https://github.com/BuaBook/kdb-common/issues/48).
+- **`.compress.partition`** gained an `ignoreTables` option to exclude specific tables from a
+  HDB partition compression, and **`.compress.splay`** gained `compressColumns` /
+  `ignoreColumns` options to compress or copy only a specific subset of a splay's columns
+  (mutually exclusive), matching the fixes proposed upstream for
+  [BuaBook/kdb-common#82](https://github.com/BuaBook/kdb-common/issues/82) and
+  [BuaBook/kdb-common#83](https://github.com/BuaBook/kdb-common/issues/83).
 
 ### Fixed
 
