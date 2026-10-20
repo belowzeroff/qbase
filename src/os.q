@@ -123,15 +123,34 @@
     :ssr[path;"/";"\\"];
  };
 
+/ Escapes a string for safe use as a single shell argument on Linux/macOS by wrapping it in
+/ single quotes and escaping any embedded single quote the POSIX way (' -> '\'')
+/  @param str (String) The string to escape
+/  @returns (String) The string, single-quote-wrapped, safe to splice into a shell command
+.os.i.escapeSQ:{[str]
+    :"'",ssr[str;"'";"'\\''"],"'";
+ };
+
+/ Best-effort escaping for Windows cmd.exe arguments: strips any embedded double quote (which
+/ cmd.exe cannot be relied upon to escape) and wraps the result in double quotes.
+/ NOTE: cmd.exe has no reliable universal escaping for all shell metacharacters (e.g. carets,
+/ percent-expansion, ampersands). This is best-effort only and is NOT verified on Windows -
+/ validate/sanitise further yourself before relying on it with untrusted input.
+/  @param str (String) The string to escape
+/  @returns (String) The string, double-quote-wrapped, best-effort safe for cmd.exe
+.os.i.escapeDQ:{[str]
+    :"\"",ssr[str;"\"";""],"\"";
+ };
+
 
 // Windows Implementation
 
 .os.w.mkdir:{
-    :"mkdir ",.os.i.convertPathForWindows x;
+    :"mkdir ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
 .os.w.rmdir:{
-    :"rmdir ",.os.i.convertPathForWindows x;
+    :"rmdir ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
 .os.w.pwd:{
@@ -139,15 +158,17 @@
  };
 
 .os.w.rm:{
-    :"del ",.os.i.convertPathForWindows x;
+    :"del ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
 .os.w.rmF:{
-    :"del /F /Q ",.os.i.convertPathForWindows x;
+    :"del /F /Q ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
+/ NOTE: 'x' sits inside an already double-quoted /FI filter phrase, so it is only stripped of
+/ embedded quotes here rather than re-wrapped - best-effort, not verified on Windows
 .os.w.pidCheck:{
-    :"tasklist /FI \"PID eq ",x,"\" /FO CSV /NH";
+    :"tasklist /FI \"PID eq ",ssr[x;"\"";""],"\" /FO CSV /NH";
  };
 
 .os.w.sigterm:{
@@ -158,45 +179,46 @@
     :"taskkill /PID ",x," /F";
  };
 
+/ best-effort, not verified on Windows
 .os.w.sleep:{
-    :"timeout /t ",x," /nobreak >nul";
+    :"timeout /t ",.os.i.escapeDQ[x]," /nobreak >nul";
  };
 
 / ln requires 2 arguments so pass string separated by "|"
 / First argument should be the target, 2nd argument should be the source
+/ best-effort, not verified on Windows
 .os.w.ln:{
     args:"|" vs x;
-    :"mklink ",.os.i.convertPathForWindows[args 0]," ",.os.i.convertPathForWindows args 1;
+    :"mklink ",.os.i.escapeDQ[.os.i.convertPathForWindows args 0]," ",.os.i.escapeDQ[.os.i.convertPathForWindows args 1];
  };
 
 / mv requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
+/ best-effort, not verified on Windows
 .os.w.mv:{
     args:"|" vs x;
-    :"move ",.os.i.convertPathForWindows[args 0]," ",.os.i.convertPathForWindows args 1;
+    :"move ",.os.i.escapeDQ[.os.i.convertPathForWindows args 0]," ",.os.i.escapeDQ[.os.i.convertPathForWindows args 1];
  };
 
 / cp requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
+/ best-effort, not verified on Windows
 .os.w.cp:{
     args:"|" vs x;
-    :"copy ",.os.i.convertPathForWindows[args 0]," ",.os.i.convertPathForWindows args 1;
+    :"copy ",.os.i.escapeDQ[.os.i.convertPathForWindows args 0]," ",.os.i.escapeDQ[.os.i.convertPathForWindows args 1];
  };
 
+/ best-effort, not verified on Windows
 .os.w.rmFolder:{
-    :"rd /S /Q ",.os.i.convertPathForWindows x;
- };
-
-.os.w.rmFolder:{
-    :"rd /S /Q ",.os.i.convertPathForWindows x;
+    :"rd /S /Q ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
 .os.w.tail:{
-    :"type ",.os.i.convertPathForWindows x;
+    :"type ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
 .os.w.safeRmFolder:{
-    :"rmdir ",.os.i.convertPathForWindows x;
+    :"rmdir ",.os.i.escapeDQ .os.i.convertPathForWindows x;
  };
 
 .os.w.procCount:{
@@ -213,9 +235,10 @@
 
 / cp requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
+/ best-effort, not verified on Windows
 .os.w.cpFolder:{
     args:"|" vs x;
-    :"xcopy /e /y ",.os.i.convertPathForWindows[args 0]," ",.os.i.convertPathForWindows args 1;
+    :"xcopy /e /y ",.os.i.escapeDQ[.os.i.convertPathForWindows args 0]," ",.os.i.escapeDQ[.os.i.convertPathForWindows args 1];
  };
 
 .os.w.terminalSize:{
@@ -225,11 +248,11 @@
 // Linux Implementation
 
 .os.l.mkdir:{
-    :"mkdir -p ",x;
+    :"mkdir -p ",.os.i.escapeSQ x;
  };
 
 .os.l.rmdir:{
-    :"rmdir ",x;
+    :"rmdir ",.os.i.escapeSQ x;
  };
 
 .os.l.pwd:{
@@ -237,15 +260,15 @@
  };
 
 .os.l.rm:{
-    :"rm -v ",x;
+    :"rm -v ",.os.i.escapeSQ x;
  };
 
 .os.l.rmF:{
-    :"rm -vf ",x;
+    :"rm -vf ",.os.i.escapeSQ x;
  };
 
 .os.l.pidCheck:{
-    :"kill -n 0 ",x," 2>/dev/null; echo $?";
+    :"kill -n 0 ",.os.i.escapeSQ[x]," 2>/dev/null; echo $?";
  };
 
 .os.l.sigint:{
@@ -261,40 +284,40 @@
  };
 
 .os.l.sleep:{
-    :"sleep ",x;
+    :"sleep ",.os.i.escapeSQ x;
  };
 
 / ln requires 2 arguments so pass string separated by "|"
 / First argument should be the target, 2nd argument should be the source
 .os.l.ln:{
     args:"|" vs x;
-    :"ln -s ",args[1]," ",args 0;
+    :"ln -s ",.os.i.escapeSQ[args 1]," ",.os.i.escapeSQ args 0;
  };
 
 / mv requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
 .os.l.mv:{
     args:"|" vs x;
-    :"mv ",args[0]," ",args 1;
+    :"mv ",.os.i.escapeSQ[args 0]," ",.os.i.escapeSQ args 1;
  };
 
 / cp requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
 .os.l.cp:{
     args:"|" vs x;
-    :"cp ",args[0]," ",args 1;
+    :"cp ",.os.i.escapeSQ[args 0]," ",.os.i.escapeSQ args 1;
  };
 
 .os.l.rmFolder:{
-    :"rm -rvf ",x;
+    :"rm -rvf ",.os.i.escapeSQ x;
  };
 
 .os.l.tail:{
-    :"tail -n 30 ",x;
+    :"tail -n 30 ",.os.i.escapeSQ x;
  };
 
 .os.l.safeRmFolder:{
-    :"rmdir ",x;
+    :"rmdir ",.os.i.escapeSQ x;
  };
 
 .os.l.procCount:{
@@ -310,14 +333,14 @@
  };
 
 .os.l.cpuAssign:{
-    :"taskset -cp ",x;
+    :"taskset -cp ",.os.i.escapeSQ x;
  };
 
 / cp requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
 .os.l.cpFolder:{
     args:"|" vs x;
-    :"cp -rv ",args[0]," ",args 1;
+    :"cp -rv ",.os.i.escapeSQ[args 0]," ",.os.i.escapeSQ args 1;
  };
 
 .os.l.terminalSize:{
@@ -334,17 +357,17 @@
  };
 
 .os.l.readlink:{
-    :"readlink -f ",x;
+    :"readlink -f ",.os.i.escapeSQ x;
  };
 
 
 // Mac OSX Implementation
 .os.m.mkdir:{
-    :"mkdir -p ",x;
+    :"mkdir -p ",.os.i.escapeSQ x;
  };
 
 .os.m.rmdir:{
-    :"rmdir ",x;
+    :"rmdir ",.os.i.escapeSQ x;
  };
 
 .os.m.pwd:{
@@ -352,15 +375,15 @@
  };
 
 .os.m.rm:{
-    :"rm -v ",x;
+    :"rm -v ",.os.i.escapeSQ x;
  };
 
 .os.m.rmF:{
-    :"rm -vf ",x;
+    :"rm -vf ",.os.i.escapeSQ x;
  };
 
 .os.m.pidCheck:{
-    :"kill -n 0 ",x," 2>/dev/null; echo $?";
+    :"kill -n 0 ",.os.i.escapeSQ[x]," 2>/dev/null; echo $?";
  };
 
 .os.m.sigint:{
@@ -376,40 +399,40 @@
  };
 
 .os.m.sleep:{
-    :"sleep ",x;
+    :"sleep ",.os.i.escapeSQ x;
  };
 
 / ln requires 2 arguments so pass string separated by "|"
 / First argument should be the target, 2nd argument should be the source
 .os.m.ln:{
     args:"|" vs x;
-    :"ln -s ",args[1]," ",args 0;
+    :"ln -s ",.os.i.escapeSQ[args 1]," ",.os.i.escapeSQ args 0;
  };
 
 / mv requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
 .os.m.mv:{
     args:"|" vs x;
-    :"mv ",args[0]," ",args 1;
+    :"mv ",.os.i.escapeSQ[args 0]," ",.os.i.escapeSQ args 1;
  };
 
 / cp requires 2 arguments so pass string separated by "|"
 / First argument should be the source, 2nd argument should be the target
 .os.m.cp:{
     args:"|" vs x;
-    :"cp ",args[0]," ",args 1;
+    :"cp ",.os.i.escapeSQ[args 0]," ",.os.i.escapeSQ args 1;
  };
 
 .os.m.rmFolder:{
-    :"rm -rvf ",x;
+    :"rm -rvf ",.os.i.escapeSQ x;
  };
 
 .os.m.tail:{
-    :"tail -n 30 ",x;
+    :"tail -n 30 ",.os.i.escapeSQ x;
  };
 
 .os.m.safeRmFolder:{
-    :"rmdir ",x;
+    :"rmdir ",.os.i.escapeSQ x;
  };
 
 .os.m.procCount:{
@@ -428,7 +451,7 @@
 / First argument should be the source, 2nd argument should be the target
 .os.m.cpFolder:{
     args:"|" vs x;
-    :"cp -rv ",args[0]," ",args 1;
+    :"cp -rv ",.os.i.escapeSQ[args 0]," ",.os.i.escapeSQ args 1;
  };
 
 .os.m.terminalSize:{
@@ -441,5 +464,5 @@
  };
 
 .os.m.readlink:{
-    :"readlink -f ",x;
+    :"readlink -f ",.os.i.escapeSQ x;
  };
