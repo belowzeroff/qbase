@@ -35,8 +35,41 @@ nav:
   - Getting Started: getting-started.md
   - Core Concepts: core-concepts.md
   - Module Guides:
-      - log: modules/log.md
-      - cargs: modules/cargs.md
-      - require: modules/require.md
-      - http: modules/http.md
+      - Core:
+          - require: modules/require.md
+          - log: modules/log.md
+          - log.loggers: modules/log.loggers.md
+          - cargs: modules/cargs.md
+          - ns: modules/ns.md
+          - if: modules/if.md
+          - type: modules/type.md
+          - util: modules/util.md
+      - Data & Time:
+          - time: modules/time.md
+          - time.util: modules/time.util.md
+          - tz: modules/tz.md
+          - convert: modules/convert.md
+          - csv: modules/csv.md
+          - rand: modules/rand.md
+      - I/O & Files:
+          - file: modules/file.md
+          - file.hdb: modules/file.hdb.md
+          - file.kdb: modules/file.kdb.md
+          - compress: modules/compress.md
+          - os: modules/os.md
+          - so: modules/so.md
+          - terminal: modules/terminal.md
+          - env: modules/env.md
+          - parquet: modules/parquet.md
+      - Networking & Integrations:
+          - ipc: modules/ipc.md
+          - http: modules/http.md
+          - http.status: modules/http.status.md
+          - jschema: modules/jschema.md
+          - wsc: modules/wsc.md
+          - cron: modules/cron.md
+          - event: modules/event.md
+          - mail: modules/mail.md
+          - slack: modules/slack.md
+          - py: modules/py.md
   - API Reference: api-reference.md
