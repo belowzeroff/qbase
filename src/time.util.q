@@ -34,7 +34,7 @@
     ddmmss:`second$timeNow;
     millis:`long$timeNow mod 1000;
 
-    :except[;".:"] string[.time.today[]],"_",string[ddmmss],"_",string millis;
+    :except[;".:"] string[.time.today[]],"_",string[ddmmss],"_",-3$"00",string millis;
  };
 
 /  @returns (Timestamp) Current time as timestamp but rounded to the nearest millisecond
