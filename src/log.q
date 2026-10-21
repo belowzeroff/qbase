@@ -108,12 +108,16 @@
 .log.pattern:()!();
 
 / The in-memory queue of pending async log lines, populated by '.log.i.asyncEnqueue' when '.log.cfg.async' is
-/ enabled. Each row is already fully formatted and ready to be written as-is to 'fd' - batched per 'fd' and
-/ drained by '.log.i.asyncFlush'
+/ enabled. Each entry is a 2-item list of (fd; line) - the destination and the already fully-formatted line,
+/ ready to be written as-is - batched per 'fd' and drained by '.log.i.asyncFlush'.
+/ NOTE: Deliberately kept as a plain general list (rather than a table) so 'fd' can be freely mixed between
+/ the real integer file descriptors used by '.log.levels' (-1i/-2i) and any function-valued 'fd' (e.g. a test's
+/ capturing function) across entries, without kdb specialising/narrowing the column to a single type (which a
+/ table column would do, then reject a differently-typed 'fd' on a later insert)
 /  @see .log.cfg.async
 /  @see .log.i.asyncEnqueue
 /  @see .log.i.asyncFlush
-.log.i.asyncQueue:([] fd:(); line:());
+.log.i.asyncQueue:();
 
 / Scratch variable used by '.log.i.asyncLogAndQueue' to capture the line a real '.log.loggers.*' function would
 / have written to 'fd', without actually performing that write
@@ -416,7 +420,7 @@
 /  @see .log.cfg.asyncMaxQueueSize
 /  @see .log.i.asyncFlush
 .log.i.asyncEnqueue:{[fd; line]
-    `.log.i.asyncQueue insert (fd; line);
+    .log.i.asyncQueue,:enlist (fd; line);
 
     if[count[.log.i.asyncQueue] > .log.cfg.asyncMaxQueueSize;
         .log.if.warn "Async log queue exceeded maximum size. Forcing an immediate flush [ Max Queue Size: ",string[.log.cfg.asyncMaxQueueSize]," ]";
@@ -439,9 +443,11 @@
     queued:.log.i.asyncQueue;
     .log.i.asyncQueue:0#.log.i.asyncQueue;
 
-    grouped:group queued`fd;
+    fds:queued@\:0;
+    lines:queued@\:1;
+    grouped:group fds;
 
-    { [queued; fd; idxs] fd "\n" sv queued[`line] idxs }[queued] ./: flip (key grouped; value grouped);
+    { [lines; fd; idxs] fd "\n" sv lines idxs }[lines;] ./: flip (key grouped; value grouped);
  };
 
 / Ensures queued async log lines are eventually flushed without any further action from the caller:
