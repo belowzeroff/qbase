@@ -24,10 +24,27 @@
 .file.kdb.cfg.attributes:``s`u`p`g;
 
 / Bytes within the header that contain useful information to extrace, based on the 'magic number' of the file
+/ NOTE: For the 0xfe20 magic, the 'length' entry below (header bytes 8-15) is NOT reliable on all kdb+ builds - on
+/ this repo's reference build (kdb+ 4.1, 2025.07.09) those bytes are always zero regardless of the real element
+/ count (confirmed with 'read1' against 3-, 300- and 70000-element long lists - the first 16 header bytes are
+/ byte-for-byte identical). '.file.kdb.getLength' therefore does NOT use this 'length' entry for 0xfe20 - it
+/ derives the count from the file size instead (see '.file.kdb.cfg.singleTypedListHeaderBytes' / 'typeByteWidth'
+/ and 'getLength' below). The entry is left here as-is (it is still used to document the header layout and may be
+/ accurate on other kdb+ builds) but should not be relied upon for length extraction
 .file.kdb.cfg.bytes:`magic xkey flip `magic`type`attr`length!"*II*"$\:();
 .file.kdb.cfg.bytes,:`magic`type`attr`length!(0xff01; 2; 3; 4 + til 4);
 .file.kdb.cfg.bytes,:`magic`type`attr`length!(0xfe20; 2; 3; 8 + til 8);
 .file.kdb.cfg.bytes,:`magic`type`attr`length!enlist[0xfd20],(4096 - 16) + (2; 3; 8 + til 8);
+
+/ For the 0xfe20 ('single-typed list') magic, the on-disk header is a constant 16 bytes before the element data
+/ starts - verified by comparing 'hcount' (file size) against the known element count across 3-, 300- and
+/ 70000-element long ('j') lists and 3- and 300-element int ('i') lists: (fileSize - 16) always divides exactly by
+/ the type's element byte width to give the real count, for every length and both types tried
+.file.kdb.cfg.singleTypedListHeaderBytes:16;
+
+/ Fixed element byte width by kdb+ type number, for the plain (non-symbol) list types that can appear under the
+/ 0xfe20 magic. Used by '.file.kdb.getLength' to turn a 0xfe20 file's size into an element count
+.file.kdb.cfg.typeByteWidth:(`short$1 2 4 5 6 7 8 9 10 12 13 14 15 16 17 18 19)!1 16 1 2 4 8 4 8 1 8 4 4 8 8 4 4 4;
 
 / The start byte for the sym enumeration target (e.g. 'sym')
 .file.kdb.cfg.symEnumByteStart:()!`int$();
@@ -68,12 +85,22 @@
 / Optimised element length function. Only requires reading the first 4096 bytes of the specified file to return the length
 / (instead of "count get").
 / NOTE: Optimised code path works for all atom and list types
+/ NOTE: For the 0xfe20 ('single-typed list') magic, the element count is NOT read from the header - on this repo's
+/ reference kdb+ build (4.1, 2025.07.09) that header 'length' field is always zero, so the count is instead derived
+/ from the file size: (hcount file - 16) div (element byte width), which was verified against multiple list
+/ lengths and element types (see '.file.kdb.cfg.singleTypedListHeaderBytes' / 'typeByteWidth' above)
 /  @param file (FilePath) The file to return the element size
 /  @returns (Long) The list length
 .file.kdb.getLength:{[file]
     header:read1 (file; 0; .file.kdb.cfg.headerLength);
 
     magic:header 0 1;
+
+    if[0xfe20 ~ magic;
+        fileType:`short$header .file.kdb.cfg.bytes[magic]`type;
+        :`long$((hcount file) - .file.kdb.cfg.singleTypedListHeaderBytes) div .file.kdb.cfg.typeByteWidth fileType;
+    ];
+
     lengthBytes:0x0 sv reverse header .file.kdb.cfg.bytes[magic]`length;
 
     if[not 0xff01 ~ magic;

@@ -8,19 +8,21 @@
 // same single '.require.lib`file' call used by test_file.q and test_file.hdb.q also loads
 // file.kdb.q (confirmed by inspecting '.require.loadedLibs[`file]`files' after the call).
 
-// NOTE on '.file.kdb.getLength': for a plain (non-symbol) single-typed list file - the
-// "0xfe20 magic" case, e.g. a bare long/float list written via 'file set 10 20 30j' - this
-// kdb+ build (4.1, 2025.07.09) does NOT encode the element count anywhere in the first 4096
-// header bytes: the 16-byte header is byte-for-byte identical for a 3-element and a
-// 300-element long list (verified directly with 'read1'), so the count is apparently implicit
-// from the file size on this kdb+ version. '.file.kdb.getLength' assumes the count lives at
-// header bytes 8-15 for this magic, which is incorrect here, so it returns 0 instead of the
-// real count for this case (confirmed against both a standalone list file and a plain splayed
-// numeric column file). This looks like a genuine behavioural bug/version-incompatibility in
-// 'file.kdb.q' rather than a test-fixture problem - 'getType' and 'getAttribute' are unaffected
-// and verified correct below. 'getLength' IS verified correct below against the cases where it
-// does match ground truth on this build: atoms, a non-enumerated symbol list and an enumerated
-// (splayed) symbol column.
+// NOTE on '.file.kdb.getLength' (fixed - see below): for a plain (non-symbol) single-typed
+// list file - the "0xfe20 magic" case, e.g. a bare long/float list written via
+// 'file set 10 20 30j' - this kdb+ build (4.1, 2025.07.09) does NOT encode the element count
+// anywhere in the first 4096 header bytes: the 16-byte header is byte-for-byte identical for a
+// 3-element and a 300-element long list (verified directly with 'read1'), so the count is not
+// readable from the header on this kdb+ version. '.file.kdb.getLength' used to assume the count
+// lived at header bytes 8-15 for this magic, which is incorrect here, so it returned 0 instead
+// of the real count. This has been fixed in 'file.kdb.q': for the 0xfe20 magic, the count is now
+// derived from the file size instead - '(hcount file - 16) div elementByteWidth' - which was
+// verified to hold across multiple list lengths (3, 300, 70000) and element types (long, int,
+// short, real, byte, char, float, guid, boolean, date; the 16-byte header size was constant in
+// every case). Tests below cover both a short and a long list of the same type (long and int)
+// to guard against a regression that only breaks on longer lists (as the original bug did -
+// it returned 0 regardless of length, so a single-length test would not have caught it).
+// 'getType' and 'getAttribute' are unaffected and verified correct below.
 
 
 // -- .file.kdb.getType / .file.kdb.getAttribute (plain + sorted long list) ------
@@ -101,6 +103,51 @@
 
     .test.assert.equals[3; actualLength];
     .test.assert.equals[11h; actualType];
+ };
+
+
+// -- .file.kdb.getLength (regression - plain single-typed list, 0xfe20 magic) ---
+//
+// Covers the fixed bug: a plain (non-symbol) single-typed list ("0xfe20 magic") used to always
+// return 0 from 'getLength' regardless of the real element count, because the header bytes it
+// read for the count are not populated on this kdb+ build. Each case below checks a SHORT and a
+// LONG list of the same element type, so a regression that only breaks for longer lists (as the
+// original bug did) would be caught
+
+.t.filekdb_getLength_matchesCountForShortAndLongPlainLongList:{[]
+    dir:`:/tmp/qbase_test_filekdb_plainlong_regr;
+    fShort:` sv dir,`longshort;
+    fLong:` sv dir,`longlong;
+
+    system "mkdir -p ",1_ string dir;
+    fShort set til[3]+10j;
+    fLong set til[300]+10j;
+
+    actualShort:.[.file.kdb.getLength; enlist fShort; {[e] `FAILED}];
+    actualLong:.[.file.kdb.getLength; enlist fLong; {[e] `FAILED}];
+
+    system "rm -rf ",1_ string dir;
+
+    .test.assert.equals[3; actualShort];
+    .test.assert.equals[300; actualLong];
+ };
+
+.t.filekdb_getLength_matchesCountForShortAndLongPlainIntList:{[]
+    dir:`:/tmp/qbase_test_filekdb_plainint_regr;
+    fShort:` sv dir,`intshort;
+    fLong:` sv dir,`intlong;
+
+    system "mkdir -p ",1_ string dir;
+    fShort set `int$til[3]+10;
+    fLong set `int$til[300]+10;
+
+    actualShort:.[.file.kdb.getLength; enlist fShort; {[e] `FAILED}];
+    actualLong:.[.file.kdb.getLength; enlist fLong; {[e] `FAILED}];
+
+    system "rm -rf ",1_ string dir;
+
+    .test.assert.equals[3; actualShort];
+    .test.assert.equals[300; actualLong];
  };
 
 
