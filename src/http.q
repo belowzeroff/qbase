@@ -69,7 +69,7 @@
 .http.responseTypes:`s#100 200 300 400 500i!`informational`success`redirect`clientError`serverError;
 
 / Headers that are extracted in '.http.i.parseResponse' for post processing
-.http.responseExtractHeaders:`contentType`contentEncoding!`$("content-type";"content-encoding");
+.http.responseExtractHeaders:`contentType`contentEncoding`transferEncoding!`$("content-type";"content-encoding";"transfer-encoding");
 
 
 .http.init:{
@@ -401,12 +401,58 @@
     :`proxy`hp!(1b; `$":",proxyHp);
  };
 
+/ Decodes a 'Transfer-Encoding: chunked' HTTP body into its plain content. Each chunk is encoded as a hex chunk-size
+/ line (optionally followed by ';' delimited chunk extensions, which are ignored), terminated by CRLF, then exactly
+/ that many bytes of chunk data, then a further CRLF. The stream ends with a zero-size chunk, optionally followed by
+/ trailer headers and a final CRLF, both of which are discarded
+/  @param body (String) The raw chunked-encoded HTTP body (chunk-size markers and all)
+/  @returns (String) The decoded body with all chunk framing removed
+/  @throws InvalidChunkSizeException If a chunk-size line cannot be parsed as a hex number
+.http.i.dechunk:{[body]
+    result:"";
+    pos:0;
+    finished:0b;
+
+    while[not finished;
+        eol:pos + first (pos _ body) ss .http.newLine;
+
+        sizeLine:pos _ eol#body;
+        hexSize:lower trim first ";" vs sizeLine;
+
+        hexDigits:"0123456789abcdef";
+        digitVals:hexDigits?hexSize;
+
+        if[(0 = count digitVals) | any digitVals = count hexDigits;
+            '"InvalidChunkSizeException";
+        ];
+
+        chunkSize:16 sv digitVals;
+        dataStart:eol + count .http.newLine;
+
+        if[chunkSize = 0;
+            finished:1b;
+        ];
+
+        if[not finished;
+            result,:chunkSize#dataStart _ body;
+            pos:dataStart + chunkSize + count .http.newLine;
+        ];
+    ];
+
+    :result;
+ };
+
 / Provides response parsing for easier handling after a HTTP call. The dictionary returned includes:
 /  * 'statusCode: The HTTP status code parsed as an integer
 /  * `statusType: The status code type (based on '.http.responseTypes'
 /  * `statusDetail: The status code detail as returned from the server
 /  * `headers: The returned headers as a dictionary
 /  * `body: Any body response as a string with new line separators
+/ If the response is sent with 'Transfer-Encoding: chunked', the body is first decoded via '.http.i.dechunk' before
+/ any content-encoding (GZIP) decompression or content-type auto-conversion is applied, since chunking is a
+/ transport-layer encoding that must be removed before any content-layer processing can take place. If dechunking
+/ fails (e.g. the body was already decoded, such as by a native HTTP handle that already handles chunked transfer
+/ encoding itself), an error is logged and the body is left unmodified
 /  @param responseStr (String) The HTTP response string
 /  @returns (Dict) A dictionary of the parsed HTTP response
 /  @throws InvalidContentEncodingException If '.http.cfg.errorOnInvaildContentEncoding' is true and an unsupported content encoding is returned
@@ -414,6 +460,7 @@
 /  @see .http.httpVersion
 /  @see .http.responseTypes
 /  @see .http.gzAvailable
+/  @see .http.i.dechunk
 /  @see .Q.gz
 .http.i.parseResponse:{[responseStr]
     / Split on the empty line between the meta information and the body
@@ -434,6 +481,16 @@
 
     / Headers extracted required for response post-processing
     ppHeaders:key[.http.responseExtractHeaders]!hdrDict key[hdrDict] first each where each value[.http.responseExtractHeaders] =\: lower key hdrDict;
+
+    if[(lower trim ppHeaders`transferEncoding) ~ "chunked";
+        dechunkRes:.ns.protectedExecute[`.http.i.dechunk; body];
+
+        $[.ns.const.pExecFailure ~ first dechunkRes;
+            .log.if.error "Failed to decode chunked transfer encoding, leaving body unmodified. Error - ",dechunkRes`errorMsg;
+        / else
+            body:dechunkRes
+        ];
+    ];
 
     if[0 < count ppHeaders`contentEncoding;
         if[.http.gzAvailable & ppHeaders[`contentEncoding] in .http.cfg.gzipContentEncodings;
