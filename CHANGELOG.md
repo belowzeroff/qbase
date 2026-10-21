@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.1] - 2026-10-20
 
-A patch release: two inherited-from-upstream bug fixes, a security hardening pass over
-the library's shell-facing code, and two inherited-from-upstream feature extensions. No
-breaking changes; all new options default to the existing behaviour.
+A patch release: full test coverage across every module (which caught two previously-latent
+bugs), a security hardening pass over the library's shell-facing code, two inherited-from-
+upstream bug fixes, and two inherited-from-upstream feature extensions. No breaking changes;
+all new options default to the existing behaviour.
 
 ### Added
 
@@ -25,6 +26,10 @@ breaking changes; all new options default to the existing behaviour.
   [BuaBook/kdb-common#82](https://github.com/BuaBook/kdb-common/issues/82) and
   [BuaBook/kdb-common#83](https://github.com/BuaBook/kdb-common/issues/83).
 
+- **Test coverage** now spans every module in `src/` (previously 14 of 33) — `tests/` grew from
+  54 to 235 cases. Writing these tests surfaced the two bugs listed below, each previously
+  unverified by any test.
+
 ### Fixed
 
 - **`.ns.protectedExecute`** now returns the standard `` `isError`errorMsg`` error dictionary
@@ -33,6 +38,15 @@ breaking changes; all new options default to the existing behaviour.
   [BuaBook/kdb-common#115](https://github.com/BuaBook/kdb-common/issues/115).
 - **`.util.trim`** no longer raises a `type` error on an empty or all-whitespace string; it now
   returns `""` for both.
+- **`.time.nowForFileName`** no longer omits leading zeros from the millisecond component,
+  which previously shortened its documented fixed-width `yyyymmdd_hhMMss_SSS` format by 1-2
+  characters whenever the millisecond value was below 100 (roughly 1 call in 10).
+- **`.file.kdb.getLength`** no longer returns `0` for an ordinary single-typed list file (the
+  `0xfe20` magic, e.g. any plain non-enumerated numeric or sym column) on kdb+ builds where that
+  format's header does not encode the element count (confirmed on kdb+ 4.1, 2025.07.09, where
+  those header bytes are always zero regardless of length). The length is now derived from the
+  file size instead of the unreliable header field for this magic; the other two supported
+  magics (`0xff01`, `0xfd20`) were already correct and are unaffected.
 
 ### Security
 
